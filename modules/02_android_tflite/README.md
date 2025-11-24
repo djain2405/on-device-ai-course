@@ -1,4 +1,5 @@
 **📘 Module 2 - TensorFlow Lite on Android (Hands-On)**
+
 Build Your First On-Device AI App with TFLite + Jetpack Compose
 
 Welcome to Module 2 - your first real implementation of on-device AI on Android.
@@ -79,7 +80,7 @@ We provide boilerplate Compose code + photo picker.
 
 🧠 **4. Code Walkthrough**
 
-Classifier.kt — Running TFLite Inference
+Classifier.kt - Running TFLite Inference
 
 ```
 package com.example.tflitedemo
@@ -99,13 +100,13 @@ class Classifier(context: Context) {
             .build()
     )
 
-    data class Result(val label: String, val confidence: Float)
+    data class ClassificationResult(val label: String, val confidence: Float)
 
-    fun classify(bitmap: Bitmap): Result {
+    fun classify(bitmap: Bitmap): ClassificationResult {
         val tensor = TensorImage.fromBitmap(bitmap)
         val outputs = classifier.classify(tensor)
         val top = outputs.firstOrNull()?.categories?.firstOrNull()
-        return Result(
+        return ClassificationResult(
             label = top?.label ?: "Unknown",
             confidence = top?.score ?: 0f
         )
@@ -114,7 +115,7 @@ class Classifier(context: Context) {
 ```
 This uses the TFLite Task Library, which handles image resizing, normalization, and label mapping automatically.
 
-MainActivity.kt — Compose UI
+MainActivity.kt - Compose UI
 
 This includes:
 
@@ -165,121 +166,100 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun TFLiteDemoScreen() {
-    val ctx = LocalContext.current
-    val classifier = remember { Classifier(ctx) }
+    var result by remember { mutableStateOf<ClassificationResult?>(null) }
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    val classifier = remember { Classifier(this) }
 
-    var bitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
-    var label by remember { mutableStateOf("Pick a photo to classify") }
-    var confidence by remember { mutableStateOf(0f) }
-    var loading by remember { mutableStateOf(false) }
-
-    val resultColor by animateColorAsState(
-        targetValue = when {
-            confidence >= 0.8f -> Color(0xFF2ECC71)
-            confidence >= 0.5f -> Color(0xFFF1C40F)
-            else -> Color(0xFF95A5A6)
-        },
-        animationSpec = spring(),
-        label = "color"
-    )
-
-    val pickImageLauncher = rememberLauncherForActivityResult(
-        if (Build.VERSION.SDK_INT >= 33)
-            ActivityResultContracts.PickVisualMedia()
-        else
-            ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) {
-            loading = true
-            label = "Analyzing…"
-            LaunchedEffect(uri) {
-                val bmp = withContext(Dispatchers.IO) {
-                    ctx.contentResolver.openInputStream(uri)?.use {
-                        BitmapFactory.decodeStream(it)
-                    }
-                }
-                bitmap = bmp
-                bmp?.let {
-                    val result = withContext(Dispatchers.Default) {
-                        classifier.classify(it)
-                    }
-                    confidence = result.confidence
-                    label = "${result.label} • ${(confidence * 100).toInt()}%"
-                    loading = false
-                }
-            }
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            bitmap = uriToBitmap(it)
+            result = null // Reset result when new image is selected
         }
     }
 
-    Scaffold { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+    // Classification Result Card
+    if (result != null) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
         ) {
-
-            Text("TensorFlow Lite Demo", style = MaterialTheme.typography.titleLarge)
-
-            Spacer(Modifier.height(16.dp))
-
-            Box(
-                Modifier
+            Column(
+                modifier = Modifier
                     .fillMaxWidth()
-                    .height(280.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color.LightGray.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap!!.asImageBitmap(),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize().padding(8.dp)
-                    )
-                } else {
-                    Text("No image selected")
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(resultColor.copy(alpha = 0.15f))
-                    .border(1.dp, resultColor, RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                if (loading) {
-                    CircularProgressIndicator()
-                } else {
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = fadeIn() + scaleIn(spring())
-                    ) {
-                        Text(label, style = MaterialTheme.typography.titleSmall)
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            Button(
-                onClick = {
-                    if (Build.VERSION.SDK_INT >= 33)
-                        pickImageLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    else
-                        pickImageLauncher.launch("image/*")
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Choose Photo")
+                Text(
+                    text = "Classification Result",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = result!!.label,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Confidence: ${String.format("%.2f%%", result!!.confidence * 100)}",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Spacer(Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    progress = { result!!.confidence },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp),
+                )
             }
         }
+        Spacer(Modifier.height(16.dp))
+    }
+
+    // Select Image Button
+    Button(
+        onClick = {
+            imagePickerLauncher.launch("image/*")
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.secondary
+        )
+    ) {
+        Text(
+            text = "Select Image",
+            style = MaterialTheme.typography.titleMedium
+        )
+    }
+
+    // Classify Button
+    Button(
+        onClick = {
+            bitmap?.let {
+                result = classifier.classify(it)
+            }
+        },
+        enabled = bitmap != null,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Text(
+            text = if (result == null) "Classify Image" else "Classify Again",
+            style = MaterialTheme.typography.titleMedium
+        )
     }
 }
 ```
