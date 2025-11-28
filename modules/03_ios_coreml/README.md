@@ -105,9 +105,15 @@ The flow is:
 ```UIImage → CVPixelBuffer → model.prediction(...) → label + confidence```
 
 
+The app converts the selected UIImage directly to CIImage (Core Image format)
+
 The only tricky part is the pixel buffer conversion.
 
-We handle that for you.
+The Vision framework (VNImageRequestHandler) automatically:
+* Converts the CIImage to a CVPixelBuffer
+* Resizes the image to match MobileNetV2's input requirements (224x224)
+* Normalizes pixel values to the expected range
+* Handles color space conversions (RGB)
 
 🧠 **5. Code Walkthrough**
 
