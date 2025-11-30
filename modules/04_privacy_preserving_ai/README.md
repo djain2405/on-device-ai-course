@@ -1,6 +1,6 @@
 **📘 Module 4 - Privacy-Preserving AI Patterns**
 
-Designing Local-First, Trustworthy Intelligence for Mobile Apps
+_Designing Local-First, Trustworthy Intelligence for Mobile Apps_
 
 Welcome to Module 4 - the one where we shift from “how ML runs on a device” → “how to design AI that respects user data, honors trust, and still feels powerful.”
 
@@ -40,6 +40,7 @@ Let’s get into it.
 This module is technical + architectural + UX-driven - the full spectrum.
 
 🔐 **1. Why Privacy Matters in On-Device AI**
+
 Mobile apps touch the most personal data people generate:
 
 * photos
@@ -79,7 +80,7 @@ This is the strongest trust lever mobile apps can pull.
 
 🧱 **2. Privacy Architecture Patterns**
 
-🔹 A. Local-Only AI (Pure On-Device)
+🔹 _A. Local-Only AI (Pure On-Device)_
 
 All inference happens on the phone.
 
@@ -100,7 +101,7 @@ flowchart LR
     C --> D[Result]
 ```
 
-🔹 B. Hybrid Inference (Local First → Cloud If Needed)
+🔹 _B. Hybrid Inference (Local First → Cloud If Needed)_
 
 Start on-device.
 If the model is:
@@ -136,7 +137,7 @@ This is how:
 * Google Photos features
 work in practice.
 
-🔹 C. Derived-Data Inference (Process → Quantize → Predict)
+🔹 _C. Derived-Data Inference (Process → Quantize → Predict)_
 
 Instead of sending raw data (e.g., heart rate, motion logs), you compute local summaries:
 * min
@@ -167,7 +168,7 @@ This is perfect for:
 
 📱 **3. Real Examples (High-Impact Use Cases)**
 
-🩺 A. Health & Stress Detection
+🩺 _A. Health & Stress Detection_
 
 You never send raw heart rate logs.
 Instead you compute:
@@ -190,7 +191,7 @@ This protects:
 
 * raw biometrics
 
-🚗 B. Driving Behavior & Safety
+🚗 _B. Driving Behavior & Safety_
 
 Use motion sensors, speed deltas, and event frequency locally to detect:
 
@@ -298,6 +299,4 @@ Completing even one of these builds real skill (and résumé-ready proof).
 
 🎉 **Module 4 Complete**
 
-You’ve now learned how to build trustworthy, ethical, local-first AI — the kind that users actually feel comfortable with.
-
-This module also advances your course into deeper, more meaningful territory — and positions you as the Mobile × Privacy × AI leader you’re becoming.
+You’ve now learned how to build trustworthy, ethical, local-first AI - the kind that users actually feel comfortable with.
